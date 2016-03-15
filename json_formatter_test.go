@@ -106,6 +106,36 @@ func TestFieldClashWithLevel(t *testing.T) {
 	}
 }
 
+
+func TestFieldClashDeepWithLevel(t *testing.T) {
+	formatter := &JSONFormatter{}
+
+	b, err := formatter.Format(WithFields(Fields{
+		"level": "1",
+		"fields.level": "2",
+		"fields.fields.level": "3",
+	}))
+	if err != nil {
+		t.Fatal("Unable to format entry: ", err)
+	}
+
+	entry := make(map[string]interface{})
+	err = json.Unmarshal(b, &entry)
+	if err != nil {
+		t.Fatal("Unable to unmarshal formatted entry: ", err)
+	}
+
+	if entry["fields.level"] != "1" {
+		t.Fatal("fields.level not set to original level field")
+	}
+	if entry["fields.fields.level"] != "2" {
+		t.Fatal("fields.level not set to original level field")
+	}
+	if entry["fields.fields.fields.level"] != "3" {
+		t.Fatal("fields.level not set to original level field")
+	}
+}
+
 func TestJSONEntryEndsWithNewline(t *testing.T) {
 	formatter := &JSONFormatter{}
 
@@ -116,5 +146,29 @@ func TestJSONEntryEndsWithNewline(t *testing.T) {
 
 	if b[len(b)-1] != '\n' {
 		t.Fatal("Expected JSON log entry to end with a newline")
+	}
+}
+
+func TestFieldClashWithFixedFields(t *testing.T) {
+	formatter := &JSONFormatter{
+		FixedFields: Fields{"Githash": "abcdef", "msg":"something"},
+	}
+	b, err := formatter.Format(WithField("msg", "something else"))
+	if err != nil {
+		t.Fatal("Unable to format entry: ", err)
+	}
+	entry := make(map[string]interface{})
+	err = json.Unmarshal(b, &entry)
+	if err != nil {
+		t.Fatal("Unable to unmarshal formatted entry: ", err)
+	}
+	if entry["Githash"] != "abcdef" {
+		t.Fatal("Githash not set to original value, 'abcdef'")
+	}
+	if entry["fields.msg"] != "something" {
+		t.Fatalf("fields.msg not set to original value, 'something'")
+	}
+	if entry["fields.fields.msg"] != "something else" {
+		t.Fatalf("fields.fields.msg not set to original value, 'something else'")
 	}
 }

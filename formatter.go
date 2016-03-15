@@ -46,3 +46,10 @@ func prefixFieldClashes(data Fields) {
 		data["fields.level"] = data["level"]
 	}
 }
+
+func setField(data Fields, k string, v interface{}) {
+	if oldV, has := data[k]; has {
+		setField(data, "fields." + k, oldV)
+	}
+	data[k] = v
+}
