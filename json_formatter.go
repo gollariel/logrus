@@ -5,14 +5,45 @@ import (
 	"fmt"
 )
 
+type fieldKey string
+type FieldMap map[fieldKey]string
+
+const (
+	FieldKeyMsg   = "msg"
+	FieldKeyLevel = "level"
+	FieldKeyTime  = "time"
+)
+
+func (f FieldMap) resolve(key fieldKey) string {
+	if k, ok := f[key]; ok {
+		return k
+	}
+
+	return string(key)
+}
+
 type JSONFormatter struct {
 	// TimestampFormat sets the format used for marshaling timestamps.
 	TimestampFormat string
-	FixedFields Fields
+	FixedFields     Fields
+
+	// DisableTimestamp allows disabling automatic timestamps in output
+	DisableTimestamp bool
+
+	// FieldMap allows users to customize the names of keys for various fields.
+	// As an example:
+	// formatter := &JSONFormatter{
+	//   	FieldMap: FieldMap{
+	// 		 FieldKeyTime: "@timestamp",
+	// 		 FieldKeyLevel: "@level",
+	// 		 FieldKeyMsg: "@message",
+	//    },
+	// }
+	FieldMap FieldMap
 }
 
 func (f *JSONFormatter) Format(entry *Entry) ([]byte, error) {
-	data := make(Fields, len(entry.Data) + len(f.FixedFields) + 3)
+	data := make(Fields, len(entry.Data)+len(f.FixedFields)+3)
 	for k, v := range entry.Data {
 		switch v := v.(type) {
 		case error:

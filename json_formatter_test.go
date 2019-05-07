@@ -3,7 +3,7 @@ package logrus
 import (
 	"encoding/json"
 	"errors"
-
+	"strings"
 	"testing"
 )
 
